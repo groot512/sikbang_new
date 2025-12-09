@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIKBBANG 사장님 파트너스</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Montserrat:wght@600;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-lime': '#84CC16', 
+                        'brand-dark': '#1F2937',
+                        'brand-gray': '#F3F4F6',
+                    },
+                    fontFamily: {
+                        sans: ['"Noto Sans KR"', 'sans-serif'],
+                        eng: ['"Montserrat"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .sidebar-link.active {
+            background-color: #84CC16;
+            color: white;
+            font-weight: bold;
+        }
+        .sidebar-link:hover:not(.active) {
+            background-color: #374151;
+            color: #84CC16;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Calendar Event Styling (Google Calendar Style) */
+        .event-bar {
+            font-size: 0.7rem;
+            padding: 2px 4px;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+            color: white;
+            position: relative;
+            z-index: 10;
+        }
+        /* Start of a multi-day event */
+        .event-start {
+            border-top-left-radius: 4px;
+            border-bottom-left-radius: 4px;
+            margin-right: -10px; /* Extend to connect */
+            padding-right: 10px;
+        }
+        /* Middle of a multi-day event */
+        .event-middle {
+            margin-left: -10px;
+            margin-right: -10px;
+            border-radius: 0;
+        }
+        /* End of a multi-day event */
+        .event-end {
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
+            margin-left: -10px;
+            padding-left: 10px;
+        }
+        /* Single day event */
+        .event-single {
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-brand-gray font-sans text-gray-800 h-screen flex overflow-hidden">
+
+    <!-- Sidebar (Desktop) -->
+    <aside class="w-64 bg-brand-dark text-white flex-col hidden md:flex shadow-xl z-20">
+        <div class="h-24 flex items-center justify-center border-b border-gray-700 bg-gray-900">
+            <div class="flex items-center gap-2">
+                <!-- Logo Updated -->
+                <div class="bg-white px-3 py-1.5 rounded-lg flex items-center">
+                    <img src="https://groot512.github.io/sikbang_new/assets/images/logo.png" alt="SIKBBANG Logo" class="h-8 w-auto">
+                </div>
+                <span class="font-eng font-bold text-xl tracking-tight">Partner</span>
+            </div>
+        </div>
+
+        <div class="p-6 border-b border-gray-700 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center text-xl">👨‍🍳</div>
+            <div>
+                <p class="text-sm font-bold">김식방 사장님</p>
+                <p class="text-xs text-brand-lime">대구 월성점</p>
+            </div>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-1">
+                <li><a href="#" onclick="switchTab('dashboard')" class="sidebar-link active flex items-center gap-3 px-6 py-3 transition-colors"><i class="fa-solid fa-chart-line w-6 text-center"></i> 대시보드</a></li>
+                <li><a href="#" onclick="switchTab('calendar')" class="sidebar-link flex items-center gap-3 px-6 py-3 transition-colors"><i class="fa-regular fa-calendar-check w-6 text-center"></i> 상품 관리 (캘린더)</a></li>
+                <li><a href="#" onclick="switchTab('pickup')" class="sidebar-link flex items-center gap-3 px-6 py-3 transition-colors"><i class="fa-solid fa-box-open w-6 text-center"></i> 주문/픽업 체크</a></li>
+                <li><a href="#" onclick="switchTab('users')" class="sidebar-link flex items-center gap-3 px-6 py-3 transition-colors"><i class="fa-solid fa-users w-6 text-center"></i> 회원/주문 관리</a></li>
+                <li><a href="#" onclick="switchTab('settings')" class="sidebar-link flex items-center gap-3 px-6 py-3 transition-colors"><i class="fa-solid fa-gear w-6 text-center"></i> 매장 설정</a></li>
+            </ul>
+        </nav>
+        <div class="p-4 text-xs text-center text-gray-500 border-t border-gray-700">v3.5.0 | Help Center</div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto p-4 md:p-8 relative">
+        
+        <!-- ======================= 1. DASHBOARD ======================= -->
+        <div id="view-dashboard" class="content-view animate-fade-in">
+            <header class="flex justify-between items-center mb-8">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">안녕하세요, 사장님! 👋</h1>
+                    <p class="text-gray-500 text-sm">오늘도 신선한 하루 되세요. (2025년 12월 09일)</p>
+                </div>
+                <!-- Links to Calendar -->
+                <button onclick="switchTab('calendar')" class="bg-brand-lime text-white px-6 py-3 rounded-xl font-bold shadow-md hover:bg-lime-600 transition flex items-center gap-2">
+                    <i class="fa-solid fa-plus-circle"></i> 판매 상품 등록하러 가기
+                </button>
+            </header>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <p class="text-gray-400 text-xs font-bold uppercase">Today's Sales</p>
+                    <h3 class="text-2xl font-bold text-gray-800 mt-1">₩ 425,000</h3>
+                    <p class="text-xs text-green-500 flex items-center mt-2"><i class="fa-solid fa-arrow-up mr-1"></i> 전주 대비 15% 상승</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <p class="text-gray-400 text-xs font-bold uppercase">Pickup Status</p>
+                    <h3 class="text-2xl font-bold text-gray-800 mt-1">18 / 52 <span class="text-sm font-normal text-gray-400">건</span></h3>
+                    <div class="w-full bg-gray-200 rounded-full h-1.5 mt-2"><div class="bg-brand-lime h-1.5 rounded-full" style="width: 35%"></div></div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <p class="text-gray-400 text-xs font-bold uppercase">Active Members</p>
+                    <h3 class="text-2xl font-bold text-gray-800 mt-1">1,240 <span class="text-sm font-normal text-gray-400">명</span></h3>
+                    <p class="text-xs text-blue-500 mt-2">+ 12명 신규 가입</p>
+                </div>
+            </div>
+
+            <!-- HQ Offers List -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-6 border-b border-gray-100 bg-brand-dark text-white flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-brand-lime p-2 rounded-lg text-brand-dark"><i class="fa-solid fa-bullhorn"></i></div>
+                        <div>
+                            <h3 class="font-bold text-lg">오늘의 공동구매 상품 리스트 (HQ Offers)</h3>
+                            <p class="text-xs text-gray-300">본사에서 소싱한 상품입니다. 우리 동네에 팔 물건을 선택하세요!</p>
+                        </div>
+                    </div>
+                    <button onclick="switchTab('calendar')" class="text-sm bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded font-bold transition">
+                        관리하러 가기 <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+                <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="border border-gray-200 rounded-xl p-4 hover:shadow-md transition bg-gray-50">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="bg-red-500 text-white text-[10px] px-2 py-1 rounded-full font-bold animate-pulse">D-Day (오늘마감)</span>
+                            <span class="text-xs font-bold text-gray-500">본사잔여: 350개</span>
+                        </div>
+                        <div class="flex gap-4 items-center">
+                            <img src="https://images.unsplash.com/photo-1518635017498-87f514b751ba?q=80&w=100&auto=format&fit=crop" class="w-16 h-16 rounded-lg object-cover">
+                            <div>
+                                <h4 class="font-bold text-gray-800 text-sm">[산지직송] 설향 딸기</h4>
+                                <p class="text-brand-lime font-bold">8,900원 <span class="text-xs text-gray-400 font-normal">/ 권장가</span></p>
+                            </div>
+                        </div>
+                        <button onclick="switchTab('calendar')" class="w-full mt-4 bg-white border border-brand-lime text-brand-lime py-2 rounded-lg font-bold text-sm hover:bg-brand-lime hover:text-white transition">
+                            판매 등록하기
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======================= 2. CALENDAR (FULL MONTH & SPAN EVENTS) ======================= -->
+        <div id="view-calendar" class="content-view hidden animate-fade-in">
+            <header class="mb-6 flex justify-between items-end">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">상품 관리 (캘린더)</h1>
+                    <p class="text-gray-500 text-sm">상품별 판매 기간(약 7일)이 달력에 연속적으로 표시됩니다.</p>
+                </div>
+                <div class="flex gap-2">
+                    <button class="w-8 h-8 bg-white border rounded-full hover:bg-gray-50"><i class="fa-solid fa-chevron-left"></i></button>
+                    <span class="font-bold text-xl self-center px-2">2025. 12</span>
+                    <button class="w-8 h-8 bg-white border rounded-full hover:bg-gray-50"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+            </header>
+
+            <div class="flex flex-col lg:flex-row gap-6 h-[calc(100vh-220px)]">
+                <!-- Left: Full Calendar -->
+                <div class="lg:w-2/3 bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col">
+                    <div class="grid grid-cols-7 gap-0 text-center text-xs font-bold text-gray-400 mb-2 border-b pb-2">
+                        <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
+                    </div>
+                    <div class="grid grid-cols-7 gap-0 border-l border-t border-gray-200 flex-1">
+                        <!-- Calendar Logic: Full 35 Cells (5 Weeks) -->
+                        
+                        <!-- Week 1: Dec 1 - 7 -->
+                        <div class="border-r border-b border-gray-200 p-1 min-h-[100px] relative"><span class="text-xs text-gray-400 ml-1">1</span></div>
+                        
+                        <div class="border-r border-b border-gray-200 p-1 min-h-[100px] relative">
+                            <span class="text-xs text-gray-400 ml-1">2</span>
+                            <div class="event-bar event-start bg-red-400 mt-4">🍓 설향 딸기</div>
+                        </div>
+                        <div class="border-r border-b border-gray-200 p-1 min-h-[100px] relative">
+                            <span class="text-xs text-gray-400 ml-1">3</span>
+                            <div class="event-bar event-middle bg-red-400 mt-4">&nbsp;</div>
+                        </div>
+                        <div class="border-r border-b border-gray-200 p-1 min-h-[100px] relative">
+                            <span class="text-xs text-gray-400 ml-1">4</span>
+                            <div class="event-bar event-middle bg-red-400 mt-4">&nbsp;</div>
+                        </div>
+                        <div class="border-r border-b border-gray-200 p-1 min-h-[100px] relative">
+                            <span class="text-xs text-gray-400 ml-1">5</span>
+                            <div class="event-bar event-middle bg-red-400 mt-4">&nbsp;</div>
+                            <div class="event-bar event-start bg-orange-400">🍊 타이벡 귤</div>
+                        </div>
+                        <div class="border-r border-b border-gray-200 p-1 min-h-[100px] relative">
+                            <span class="text-xs text-gray-400 ml-1">6</span>
+                            <div class="event-bar event-middle bg-red-400 mt-4">&nbsp;</div>
+                            <div class="event-bar event-middle bg-orange-400">&nbsp;</div>
+                        </div>
+                        <div class="border-r border-b border-gray-200 p-1 min-h-[100px] relative">
+                            <span class="text-xs text-gray-400 ml-1">7</span>
+                            <div class="event-bar event-end bg-red-400 mt-4">&nbsp;</div>
+                            <div class="event-bar event-middle bg-orange-400">&nbsp;</div>
+                        </div>
+
+                        <!-- Week 2: Dec 8 - 14 -->
+                        <div class="border-r border-b border-gray-200 p-1 min-h-[100px] relative bg-blue-50">
+                            <span class="text-xs font-bold text-gray-600 ml-1">8 (어제)</span>
+                            <!-- Continue Orange Event -->
+                            <div class="event-bar event-middle bg-orange-400 mt-8 opacity-60">🍊 타이벡 (마감)</div>
+                        </div>
+                        <div class="border-r border-b border-gray-200 p-1 min-h-[100px] relative bg-lime-50 border-t-4 border-t-brand-lime">
+                            <span class="text-xs font-bold text-brand-lime ml-1">9 (오늘)</span>
+                            <div class="event-bar event-end bg-orange-400 mt-8 shadow-md">🍊 타이벡 (픽업)</div>
+                            <div class="event-bar event-start bg-blue-500">🫐 블루베리</div>
+                        </div>
+                        <div class="border-r border-b border-gray-200 p-1 min-h-[100px] relative">
+                            <span class="text-xs text-gray-600 ml-1">10</span>
+                            <div class="event-bar event-middle bg-blue-500 mt-12">&nbsp;</div>
+                        </div>
+                        <div class="border-r border-b border-gray-200 p-1 min-h-[100px] relative">
+                            <span class="text-xs text-gray-600 ml-1">11</span>
+                            <div class="event-bar event-middle bg-blue-500 mt-12">&nbsp;</div>
+                        </div>
+                        <div class="border-r border-b border-gray-200 p-1 min-h-[100px] relative">
+                            <span class="text-xs text-gray-600 ml-1">12</span>
+                            <div class="event-bar event-middle bg-blue-500 mt-12">&nbsp;</div>
+                        </div>
+                        <div class="border-r border-b border-gray-200 p-1 min-h-[100px] relative">
+                            <span class="text-xs text-gray-600 ml-1">13</span>
+                            <div class="event-bar event-middle bg-blue-500 mt-12">&nbsp;</div>
+                        </div>
+                        <div class="border-r border-b border-gray-200 p-1 min-h-[100px] relative">
+                            <span class="text-xs text-gray-600 ml-1">14</span>
+                            <div class="event-bar event-end bg-blue-500 mt-12">&nbsp;</div>
+                        </div>
+
+                        <!-- Week 3: Dec 15 - 21 (Placeholder) -->
+                        <div class="border-r border-b border-gray-200 p-1 min-h-[100px] relative"><span class="text-xs text-gray-400 ml-1">15</span></div>
+                        <div class="border-r border-b border-gray-200 p-1 min-h-[100px] relative"><span class="text-xs text-gray-400 ml-1">16</span></div>
+                        <div class="border-r border-b border-gray-200 p-1 min-h-[100px] relative"><span class="text-xs text-gray-400 ml-1">17</span></div>
+                        <div class="border-r border-b border-gray-200 p-1 min-h-[100px] relative"><span class="text-xs text-gray-400 ml-1">18</span></div>
+                        <div class="border-r border-b border-gray-200 p-1 min-h-[100px] relative"><span class="text-xs text-gray-400 ml-1">19</span></div>
+                        <div class="border-r border-b border-gray-200 p-1 min-h-[100px] relative"><span class="text-xs text-gray-400 ml-1">20</span></div>
+                        <div class="border-r border-b border-gray-200 p-1 min-h-[100px] relative"><span class="text-xs text-gray-400 ml-1">21</span></div>
+                    </div>
+                </div>
+
+                <!-- Right: Product Status List -->
+                <div class="lg:w-1/3 flex flex-col gap-4">
+                    <!-- Currently Selling -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex-1 overflow-y-auto">
+                        <h3 class="font-bold text-sm mb-3 text-brand-dark"><i class="fa-solid fa-store mr-2 text-brand-lime"></i> 현재 판매중 (Selling)</h3>
+                        <div class="space-y-3">
+                            <div class="flex gap-3 items-center p-2 border rounded-lg bg-blue-50 border-blue-200">
+                                <img src="https://images.unsplash.com/photo-1498557850523-fd3d118b962e?q=80&w=100&auto=format&fit=crop" class="w-12 h-12 rounded object-cover">
+                                <div>
+                                    <p class="text-xs font-bold">[예약중] 냉동 블루베리</p>
+                                    <p class="text-[10px] text-gray-500">기간: 12/9 ~ 12/14</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Waiting for Stock / Closed -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex-1 overflow-y-auto">
+                        <h3 class="font-bold text-sm mb-3 text-brand-dark"><i class="fa-solid fa-boxes-stacked mr-2 text-gray-400"></i> 입고 대기 / 마감</h3>
+                        <div class="space-y-3">
+                            <!-- Clickable Item -->
+                            <div onclick="switchTab('pickup')" class="flex gap-3 items-center p-2 border rounded-lg hover:bg-gray-50 cursor-pointer group transition bg-orange-50 border-orange-200">
+                                <div class="relative">
+                                    <img src="https://images.unsplash.com/photo-1582281298055-e25b84a30b0b?q=80&w=100&auto=format&fit=crop" class="w-12 h-12 rounded object-cover">
+                                    <div class="absolute inset-0 bg-black bg-opacity-30 rounded flex items-center justify-center text-white text-[8px]">입고완료</div>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-xs font-bold text-gray-600 group-hover:text-brand-lime">타이벡 고당도 귤</p>
+                                    <p class="text-[10px] text-gray-400">판매종료 (12/2 ~ 12/9)</p>
+                                </div>
+                                <button class="text-xs bg-brand-dark text-white px-2 py-1 rounded group-hover:bg-brand-lime transition">
+                                    검수/픽업 <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======================= 3. ORDER / PICKUP CHECK ======================= -->
+        <div id="view-pickup" class="content-view hidden animate-fade-in">
+            <!-- (Same as previous version) -->
+            <header class="mb-6">
+                <h1 class="text-2xl font-bold text-gray-800">주문 및 픽업 체크</h1>
+                <p class="text-gray-500 text-sm">입고된 상품을 확인하고 고객에게 전달하세요.</p>
+            </header>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 overflow-y-auto">
+                    <h3 class="font-bold text-sm mb-4 border-b pb-2">📦 픽업 대기 상품 리스트</h3>
+                    <div class="p-3 border-2 border-brand-lime bg-lime-50 rounded-lg mb-3 cursor-pointer">
+                        <div class="flex justify-between mb-1">
+                            <span class="text-xs font-bold text-brand-lime">오늘 입고됨 (12/09)</span>
+                            <span class="text-xs bg-white px-1 rounded border">15건 대기</span>
+                        </div>
+                        <h4 class="font-bold text-gray-800">타이벡 고당도 귤</h4>
+                        <p class="text-xs text-gray-500">총 80박스 입고 완료</p>
+                    </div>
+                </div>
+                <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col">
+                    <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-xl">
+                        <h3 class="font-bold text-lg text-brand-dark">타이벡 고당도 귤 <span class="text-sm font-normal text-gray-500">주문자 리스트</span></h3>
+                    </div>
+                    <div class="overflow-y-auto flex-1 p-4">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-gray-100 text-gray-600 font-bold uppercase text-xs">
+                                <tr>
+                                    <th class="px-4 py-3">닉네임 (뒷자리)</th>
+                                    <th class="px-4 py-3">수량</th>
+                                    <th class="px-4 py-3">상태</th>
+                                    <th class="px-4 py-3 text-right">관리</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                <tr class="hover:bg-green-50 transition">
+                                    <td class="px-4 py-3 font-bold text-gray-800">오인희 (4211)</td>
+                                    <td class="px-4 py-3">1개</td>
+                                    <td class="px-4 py-3"><span class="text-brand-lime font-bold border border-brand-lime px-2 py-0.5 rounded-full text-xs">대기중</span></td>
+                                    <td class="px-4 py-3 text-right"><button class="bg-brand-dark text-white px-3 py-1 rounded font-bold text-xs hover:bg-brand-lime transition">픽업 완료</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======================= 4. MEMBER / ORDER HISTORY ======================= -->
+        <div id="view-users" class="content-view hidden animate-fade-in">
+            <!-- (Same as previous version) -->
+            <header class="mb-6 flex justify-between items-center">
+                <h1 class="text-2xl font-bold text-gray-800">회원 및 주문 관리</h1>
+                <input type="text" placeholder="회원명 검색" class="w-64 pl-4 pr-4 py-2 border rounded-lg focus:border-brand-lime">
+            </header>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-gray-100 text-gray-600 font-bold uppercase text-xs">
+                        <tr>
+                            <th class="px-6 py-4">회원명</th>
+                            <th class="px-6 py-4">누적 구매 금액</th>
+                            <th class="px-6 py-4 text-center">내역</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        <tr class="hover:bg-gray-50 transition cursor-pointer" onclick="toggleDetail('member-detail-1')">
+                            <td class="px-6 py-4 font-bold text-gray-800">오인희 (4211)</td>
+                            <td class="px-6 py-4 font-bold text-brand-lime">₩ 1,250,000</td>
+                            <td class="px-6 py-4 text-center"><i class="fa-solid fa-chevron-down"></i></td>
+                        </tr>
+                        <tr id="member-detail-1" class="hidden bg-gray-50">
+                            <td colspan="3" class="p-4">
+                                <div class="bg-white border rounded-lg p-4">
+                                    <ul class="space-y-2 text-sm">
+                                        <li>2025.12.09 | 설향 왕꿀딸기 (8,900원)</li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ======================= 5. SETTINGS (UPDATED) ======================= -->
+        <div id="view-settings" class="content-view hidden animate-fade-in">
+            <header class="mb-6">
+                <h1 class="text-2xl font-bold text-gray-800">매장 설정</h1>
+                <p class="text-gray-500 text-sm">가게 정보, 오픈채팅방, 사진 등을 상세하게 관리하세요.</p>
+            </header>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Left: Store Information -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-5">
+                    <h2 class="font-bold text-lg border-b pb-2 mb-4">기본 정보 입력</h2>
+                    
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">매장명</label>
+                        <input type="text" value="식방 대구 월성점" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-brand-lime">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">대표자명</label>
+                        <input type="text" value="김식방" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-brand-lime">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">매장 전화번호</label>
+                        <input type="text" value="053-1234-5678" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-brand-lime">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">매장 주소</label>
+                        <div class="flex gap-2">
+                            <input type="text" value="대구광역시 달서구 월성동 123-45" class="w-full px-4 py-2 border rounded-lg bg-gray-50" readonly>
+                            <button class="bg-gray-200 text-gray-600 px-4 py-2 rounded-lg text-sm font-bold">주소 검색</button>
+                        </div>
+                        <!-- Map Placeholder -->
+                        <div class="w-full h-32 bg-gray-200 mt-2 rounded-lg flex items-center justify-center text-gray-500 text-xs">
+                            [지도 API 영역]
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1 text-brand-lime"><i class="fa-solid fa-comment"></i> 카카오톡 오픈채팅방 URL</label>
+                        <input type="text" value="https://open.kakao.com/o/sIkBanG" class="w-full px-4 py-2 border-2 border-brand-lime rounded-lg focus:outline-none bg-lime-50 text-brand-dark">
+                        <p class="text-xs text-gray-400 mt-1">* 고객 문의 및 공구 알림용 채팅방 링크를 입력하세요.</p>
+                    </div>
+                </div>
+
+                <!-- Right: Images & Extra -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6">
+                    <h2 class="font-bold text-lg border-b pb-2 mb-4">매장 사진 및 소개</h2>
+                    
+                    <!-- Multi-Image Upload -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">매장 사진 (최대 5장)</label>
+                        <div class="grid grid-cols-3 gap-3">
+                            <!-- Image 1 -->
+                            <div class="aspect-square bg-gray-100 rounded-lg overflow-hidden relative group">
+                                <img src="https://images.unsplash.com/photo-1604719312566-b7cb0463d3f1?q=80&w=400&auto=format&fit=crop" class="w-full h-full object-cover">
+                                <button class="absolute top-1 right-1 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-times"></i></button>
+                                <span class="absolute bottom-1 left-1 bg-black bg-opacity-60 text-white text-[10px] px-1 rounded">대표</span>
+                            </div>
+                            <!-- Image 2 -->
+                            <div class="aspect-square bg-gray-100 rounded-lg overflow-hidden relative group">
+                                <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=400&auto=format&fit=crop" class="w-full h-full object-cover">
+                                <button class="absolute top-1 right-1 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-times"></i></button>
+                            </div>
+                            <!-- Add Button -->
+                            <div class="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:border-brand-lime hover:text-brand-lime cursor-pointer transition">
+                                <i class="fa-solid fa-camera text-xl mb-1"></i>
+                                <span class="text-[10px]">추가</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">사장님 인사말 (소개글)</label>
+                        <textarea class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-brand-lime h-24 resize-none">안녕하세요! 월성동 주민 여러분의 식탁을 책임지는 김식방입니다. 매일 아침 가장 신선한 재료만 엄선해서 가져옵니다. 믿고 찾아주세요!</textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">앱 팝업 공지사항</label>
+                        <textarea class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-brand-lime h-20 resize-none" placeholder="예: 12/25 크리스마스는 휴무입니다."></textarea>
+                    </div>
+
+                    <button class="w-full bg-brand-dark text-white py-3 rounded-xl font-bold hover:bg-black transition shadow-lg mt-4">
+                        설정 저장하기
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        function switchTab(tabId) {
+            document.querySelectorAll('.content-view').forEach(el => el.classList.add('hidden'));
+            document.getElementById('view-' + tabId).classList.remove('hidden');
+            
+            const links = document.querySelectorAll('.sidebar-link');
+            links.forEach(link => link.classList.remove('active'));
+            
+            const activeLink = Array.from(links).find(link => link.getAttribute('onclick') && link.getAttribute('onclick').includes(tabId));
+            if (activeLink) activeLink.classList.add('active');
+        }
+
+        function toggleDetail(id) {
+            const el = document.getElementById(id);
+            el.classList.toggle('hidden');
+        }
+    </script>
+</body>
+</html>
